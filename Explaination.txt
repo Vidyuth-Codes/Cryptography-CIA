@@ -1,0 +1,113 @@
+# ==========================
+# CONFIGURATION
+# ==========================
+
+# 2x2 Hill Cipher Key Matrix
+KEY_MATRIX = np.array([[3, 3],
+                       [2, 5]])
+
+MOD = 26
+HASH_LENGTH = 6   # Fixed length custom hash output
+
+#
+1. Why a Custom Hash Function Was Needed
+
+Standard cryptographic hash functions such as:
+SHA-256
+SHA-1
+MD5
+
+produce outputs in:
+1.hexadecimal format
+2.digits + letters
+3.long fixed-length strings
+
+Example SHA-256 output:
+2CF24DBA5FB0A30E26E83B2AC5B9E29E...
+
+However, the Hill Cipher algorithm works only on alphabetic characters (A–Z) under modulo 26 arithmetic.
+So directly using standard hash functions creates problems:
+1.output contains digits
+2.output is too long
+3.requires conversion and truncation
+4.too many matrices and lengthy calculations
+
+To solve this compatibility issue, a custom alphabetic hash function was designed.
+
+#Custom-Built Alphabetical Hash Function Explained
+
+The custom hash function always produces:
+
+6 alphabetic characters
+Example:
+HELLO → VJXLZN
+WORLD → QMDTFA
+
+So:
+1.fixed length ✅
+2.A–Z only ✅
+3.easy to append to plaintext ✅
+
+Working:
+
+Step 1: Convert Plaintext into Numeric Form
+Eg. HELLO -> [7,4,11,11,14]
+Step 2: Weighted Character Contribution
+Each character contributes to the hash based on:
+its alphabet value
+its position in the text
+the current hash character position being generated
+
+This is done using:
+(num+1)×(j+1+i)
+
+Where:
+num = numeric value of character
+j = position of character in plaintext
+i = current position of hash output character
+
+Why this is done:
+This ensures:
+1.different characters contribute differently
+2.same letters in different positions affect the hash differently
+3.order of characters matters
+Step 3: Positional Mixing
+
+Additional mixing is added using:
+
+accumulator+=length of text×(i+3)
+and
+accumulator+=sum of all character values×(i+1)
+
+Why this is done:
+This helps make the hash more sensitive to:
+message length
+total character composition
+output position
+This creates better variation in the hash.
+
+Step 4: Modulo 26 Reduction
+After accumulation, each hash character is reduced using:
+hash_char = accumulator mod26
+This ensures the result always lies between:
+0 to 25
+which directly maps to:
+A to Z
+This is the most important part because it makes the hash:
+fully compatible with Hill Cipher
+
+Step 5: Convert Numeric Hash to Alphabetic Hash
+Finally, numeric hash values are converted back into letters.
+[21, 9, 23, 11, 25, 13] -> VJXLZN
+
+
+#Chatgpt was used for reference, the following were the prompts given:
+1. My job is to Implement hill cipher algorithm with a hash function,
+I want to hash the plain text first, then append the hash to the plain text, 
+then use hill cipher to encrypt it, then the receiver should decrypt, separate plain 
+and hash , then verify plain with hash. Is this a good approach for hill cipher as the
+process might become tedious as there will be so much more matrices, or we just send the
+encrypted message + hash separately ?
+
+2. since we are truncating the SHA-256 hash, do we use any other hash function 
+which doesnt need any modification.
